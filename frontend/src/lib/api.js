@@ -1,4 +1,4 @@
-import { supabase, isValidToken } from './supabase';
+import { supabase } from './supabase';
 
 const API_BASE = import.meta.env.PROD ? '' : 'http://localhost:4000';
 
@@ -11,23 +11,18 @@ async function request(path, options = {}) {
   };
 
   try {
-    // Get the current session token
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
-
-    // Only add Authorization header if token is valid ISO-8859-1 string
-    if (token && isValidToken(token) && isISO88591(token)) {
-      headers['Authorization'] = `Bearer ${token}`;
+    if (token) {
+      // Limpar qualquer caractere inválido do token
+      const cleanToken = token.replace(/[^\x20-\x7E]/g, '');
+      headers['Authorization'] = `Bearer ${cleanToken}`;
     }
   } catch (e) {
-    // If getting session fails, continue without auth header
-    console.warn('Failed to get session:', e.message);
+    console.warn('Auth error:', e.message);
   }
 
-  const res = await fetch(url, {
-    ...options,
-    headers,
-  });
+  const res = await fetch(url, { ...options, headers });
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Erro de conexão' }));
@@ -35,14 +30,6 @@ async function request(path, options = {}) {
   }
   if (res.status === 204) return null;
   return res.json();
-}
-
-// Check if string contains only ISO-8859-1 characters
-function isISO88591(str) {
-  for (let i = 0; i < str.length; i++) {
-    if (str.charCodeAt(i) > 255) return false;
-  }
-  return true;
 }
 
 export function get(path) {
