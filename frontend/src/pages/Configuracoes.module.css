@@ -1,0 +1,314 @@
+.config {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ===== PAGE HEADER ===== */
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--foreground);
+}
+
+.subtitle {
+  font-size: 1.125rem;
+  color: var(--foreground-muted);
+  margin-top: 0.5rem;
+  line-height: 1.75rem;
+}
+
+/* ===== AVATAR ROW ===== */
+
+.avatarRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.avatar {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--primary-glow);
+}
+
+/* ===== FIELDS ===== */
+
+.fieldGroup {
+  margin-bottom: 0.75rem;
+}
+
+.fieldGroup:last-child {
+  margin-bottom: 0;
+}
+
+.fieldLabel {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--foreground-muted);
+  margin-bottom: 0.375rem;
+  text-transform: uppercase;
+}
+
+.input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background-color: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  border-color: var(--primary-start);
+  box-shadow: 0 0 0 2px rgba(124, 111, 240, 0.15);
+}
+
+/* ===== PREFERENCES ===== */
+
+.prefList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.prefRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: var(--radius-lg);
+  transition: background-color 0.2s ease;
+}
+
+.prefRow:hover {
+  background-color: var(--surface-hover);
+}
+
+.prefInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.prefLabel {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.prefDesc {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--foreground-muted);
+  margin-top: 0.125rem;
+}
+
+/* ===== TOGGLE ===== */
+
+.toggle {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleTrack {
+  width: 2.75rem;
+  height: 1.5rem;
+  background-color: var(--surface-bright);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.toggleTrack::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1.125rem;
+  height: 1.125rem;
+  background-color: var(--foreground-muted);
+  border-radius: var(--radius-full);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.toggle input:checked + .toggleTrack {
+  background-color: var(--primary-start);
+  border-color: var(--primary-start);
+}
+
+.toggle input:checked + .toggleTrack::after {
+  transform: translateX(1.25rem);
+  background-color: #fff;
+}
+
+/* ===== SELECT ===== */
+
+.select {
+  padding: 0.5rem 0.75rem;
+  background-color: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.select:focus {
+  border-color: var(--primary-start);
+}
+
+/* ===== ACCOUNT ===== */
+
+.accountGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .accountGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.accountItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background-color: var(--surface-alt);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+
+.accountIcon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--surface-bright);
+  flex-shrink: 0;
+}
+
+.accountLabel {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--foreground-muted);
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.accountValue {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.accountActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ===== ABOUT ===== */
+
+.aboutList {
+  display: flex;
+  flex-direction: column;
+}
+
+.aboutRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.aboutRow:last-child {
+  border-bottom: none;
+}
+
+.aboutLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground-muted);
+}
+
+.aboutValue {
+  font-size: 0.875rem;
+  color: var(--foreground);
+}
+
+.aboutLink {
+  font-size: 0.875rem;
+  color: var(--info);
+  transition: color 0.2s ease;
+}
+
+.aboutLink:hover {
+  color: var(--primary);
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .avatarRow {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}

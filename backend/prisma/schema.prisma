@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  tasks          Task[]
+  routineBlocks  RoutineBlock[]
+  transactions   Transaction[]
+  workouts       Workout[]
+  studySessions  StudySession[]
+  studyGoals     StudyGoal[]
+  chatSessions   ChatSession[]
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  category    String
+  priority    String    @default("MEDIUM")
+  status      String    @default("TODO")
+  dueDate     DateTime?
+  completedAt DateTime?
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model RoutineBlock {
+  id          String   @id @default(cuid())
+  dayOfWeek   Int
+  title       String
+  description String?
+  startTime   String
+  endTime     String
+  icon        String   @default("schedule")
+  isCompleted Boolean  @default(false)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  type        String
+  category    String   @default("outros")
+  amount      Float
+  description String
+  date        DateTime @default(now())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Workout {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  muscleGroup String
+  notes       String?
+  status      String   @default("NOT_STARTED")
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  exercises   WorkoutExercise[]
+}
+
+model WorkoutExercise {
+  id        String  @id @default(cuid())
+  name      String
+  series    Int     @default(4)
+  repsMin   Int     @default(8)
+  repsMax   Int     @default(12)
+  weight    Float?
+  isDone    Boolean @default(false)
+  workoutId String
+  workout   Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+}
+
+model StudySession {
+  id        String   @id @default(cuid())
+  subject   String
+  topic     String?
+  duration  Int
+  date      DateTime @default(now())
+  notes     String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model StudyGoal {
+  id          String   @id @default(cuid())
+  name        String
+  progress    Int      @default(0)
+  color       String   @default("#7C6FF0")
+  weekTarget  Int      @default(24)
+  weekDone    Int      @default(0)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model ChatSession {
+  id        String   @id @default(cuid())
+  title     String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  messages  ChatMessage[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  role      String   // user, assistant, system
+  text      String
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}

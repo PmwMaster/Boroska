@@ -1,0 +1,16 @@
+{
+  "name": "ritmo-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.9.0",
+    "@prisma/client": "^7.9.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "prisma": "^7.9.0"
+  }
+}

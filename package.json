@@ -1,20 +1,23 @@
 {
-  "name": "temp_next",
-  "version": "0.1.0",
+  "name": "ritmo",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "vercel-build": "cd frontend && npm run build",
+    "db:push": "cd backend && npx prisma db push",
+    "db:generate": "cd backend && npx prisma generate",
+    "db:migrate": "cd backend && npx prisma migrate dev",
+    "db:studio": "cd backend && npx prisma studio",
+    "api:install": "cd api && npm install",
+    "api:generate": "cd api && npx prisma generate"
   },
   "dependencies": {
-    "next": "16.2.12",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "@prisma/client": "^7.9.0"
   },
   "devDependencies": {
-    "eslint": "^9",
-    "eslint-config-next": "16.2.12"
+    "prisma": "^7.9.0"
   }
 }

@@ -1,0 +1,269 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ===== PAGE HEADER ===== */
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--foreground);
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--foreground-muted);
+  margin-top: 0.375rem;
+  line-height: 1.5rem;
+}
+
+/* ===== STATS GRID ===== */
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+/* ===== CONTENT GRID ===== */
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+/* ===== SIDEBAR ===== */
+
+.sidebar {
+  position: sticky;
+  top: 2rem;
+}
+
+.sidebarCard {
+  padding: 1rem !important;
+}
+
+.sidebarTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--foreground-muted);
+  margin-bottom: 0.75rem;
+}
+
+.categoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.categoryItem {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  color: var(--foreground-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.categoryItem:hover {
+  background-color: var(--surface-hover);
+  color: var(--foreground);
+}
+
+.categoryItemActive {
+  background-color: rgba(124, 111, 240, 0.12);
+  color: var(--foreground);
+}
+
+.categoryName {
+  flex: 1;
+}
+
+.categoryCount {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--foreground-muted);
+  background-color: var(--surface-bright);
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+/* ===== MAIN PANEL ===== */
+
+.mainPanel {
+  min-width: 0;
+}
+
+/* ===== FILTER BAR ===== */
+
+.filterBar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.filterChip {
+  cursor: pointer !important;
+  border: none;
+  font-family: inherit;
+  font-size: 0.8125rem !important;
+  padding: 0.25rem 0.75rem !important;
+  border-radius: var(--radius-full) !important;
+  transition: all 0.15s ease;
+}
+
+.filterBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: var(--radius-full);
+  background-color: var(--danger);
+  color: #ffffff;
+  font-size: 0.625rem;
+  font-weight: 700;
+  margin-left: 0.375rem;
+}
+
+/* ===== TASK LIST ===== */
+
+.taskList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.taskItem {
+  padding: 0.75rem 0.75rem !important;
+}
+
+.taskContent {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.taskInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.taskTitle {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.taskBadges {
+  display: flex;
+  gap: 0.375rem;
+  flex-shrink: 0;
+}
+
+.taskDate {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--foreground-muted);
+  flex-shrink: 0;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 1024px) {
+  .statsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+
+  .categoryList {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .categoryItem {
+    width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .taskContent {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.375rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .taskInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.375rem;
+  }
+}
