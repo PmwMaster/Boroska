@@ -5,26 +5,26 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIU
 
 // Custom fetch that sanitizes headers to prevent ISO-8859-1 errors
 function safeFetch(url, options = {}) {
-  if (options.headers) {
-    const sanitizedHeaders = {};
-    for (const [key, value] of Object.entries(options.headers)) {
+  const sanitized = { ...options };
+  if (sanitized.headers) {
+    const clean = {};
+    for (const [key, value] of Object.entries(sanitized.headers)) {
       if (typeof value === 'string') {
-        // Remove any non-ASCII characters from header values
-        sanitizedHeaders[key] = value.replace(/[^\x20-\x7E]/g, '');
+        clean[key] = value.replace(/[^\x20-\x7E]/g, '');
       } else {
-        sanitizedHeaders[key] = value;
+        clean[key] = value;
       }
     }
-    options.headers = sanitizedHeaders;
+    sanitized.headers = clean;
   }
-  return fetch(url, options);
+  return fetch(url, sanitized);
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true,
+    detectSessionInUrl: false,
   },
   global: {
     fetch: safeFetch,

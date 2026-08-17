@@ -4,79 +4,83 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables');
+  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
 }
 
-// Admin client for server-side operations
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+export const supabaseAdmin = createClient(
+  supabaseUrl || 'https://oagfndzyywbpluiaxqmm.supabase.co',
+  supabaseServiceKey || ''
+);
 
-/**
- * Extract and validate user from Authorization header
- * @param {Request} req - The request object
- * @returns {Promise<string|null>} - User ID or null
- */
-export async function getAuthenticatedUserId(req) {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+export async function getLegacyUserId() {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('User')
+      .select('id')
+      .limit(1)
+      .single();
+    if (error) {
+      console.error('Legacy user lookup failed:', error.message);
+      return null;
+    }
+    return data?.id || null;
+  } catch (e) {
+    console.error('Legacy user error:', e.message);
     return null;
+  }
+}
+
+export async function getUserId(req) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return getLegacyUserId();
   }
 
   const token = authHeader.replace('Bearer ', '');
 
+  if (!token || token.length < 10) {
+    return getLegacyUserId();
+  }
+
   try {
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-    
-    if (error || !user) {
-      return null;
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error('Auth token invalid:', authError?.message);
+      return getLegacyUserId();
     }
 
-    // Get or create user in our database
-    const { data: dbUser } = await supabaseAdmin
+    // Try to find existing user
+    const { data: existingUser } = await supabaseAdmin
       .from('User')
       .select('id')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
-    if (dbUser) {
-      return dbUser.id;
+    if (existingUser) {
+      return existingUser.id;
     }
 
-    // Create user in our database if doesn't exist
-    const { data: newUser } = await supabaseAdmin
+    // Create user with upsert
+    const { data: newUser, error: insertError } = await supabaseAdmin
       .from('User')
-      .insert({
+      .upsert({
         id: user.id,
         email: user.email,
-        name: user.user_metadata?.name || user.email.split('@')[0],
-      })
+        name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+      }, { onConflict: 'id', ignoreDuplicates: true })
       .select('id')
       .single();
 
+    if (insertError) {
+      console.error('User upsert failed:', insertError.message);
+      return getLegacyUserId();
+    }
+
     return newUser?.id || null;
-  } catch {
-    return null;
+  } catch (e) {
+    console.error('Auth error:', e.message);
+    return getLegacyUserId();
   }
-}
-
-/**
- * Legacy fallback: get first user (for backward compatibility)
- */
-export async function getLegacyUserId() {
-  try {
-    const { data } = await supabaseAdmin.from('User').select('id').limit(1).single();
-    return data?.id;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Get user ID: try auth first, fall back to legacy
- */
-export async function getUserId(req) {
-  const authUserId = await getAuthenticatedUserId(req);
-  if (authUserId) return authUserId;
-  
-  return getLegacyUserId();
 }
