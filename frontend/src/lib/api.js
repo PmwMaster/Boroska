@@ -13,13 +13,13 @@ async function request(path, options = {}) {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
-    if (token) {
-      // Limpar qualquer caractere inválido do token
-      const cleanToken = token.replace(/[^\x20-\x7E]/g, '');
-      headers['Authorization'] = `Bearer ${cleanToken}`;
+    if (token && typeof token === 'string') {
+      // Encode token to ensure only ISO-8859-1 characters
+      const encodedToken = encodeURI(token);
+      headers['Authorization'] = `Bearer ${encodedToken}`;
     }
   } catch (e) {
-    console.warn('Auth error:', e.message);
+    // Continue without auth
   }
 
   const res = await fetch(url, { ...options, headers });
