@@ -2,6 +2,20 @@ import { supabase } from './supabase';
 
 const API_BASE = import.meta.env.PROD ? '' : 'http://localhost:4000';
 
+function safeToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  // Remove any character outside ASCII printable range (0x20-0x7E)
+  // This ensures ISO-8859-1 compatibility for HTTP headers
+  let result = '';
+  for (let i = 0; i < token.length; i++) {
+    const code = token.charCodeAt(i);
+    if (code >= 32 && code <= 126) {
+      result += token[i];
+    }
+  }
+  return result.length > 0 ? result : null;
+}
+
 async function request(path, options = {}) {
   const url = `${API_BASE}${path}`;
 
@@ -13,10 +27,9 @@ async function request(path, options = {}) {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
-    if (token && typeof token === 'string') {
-      // Encode token to ensure only ISO-8859-1 characters
-      const encodedToken = encodeURI(token);
-      headers['Authorization'] = `Bearer ${encodedToken}`;
+    const clean = safeToken(token);
+    if (clean) {
+      headers['Authorization'] = `Bearer ${clean}`;
     }
   } catch (e) {
     // Continue without auth
