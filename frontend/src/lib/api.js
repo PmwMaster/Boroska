@@ -14,7 +14,11 @@ async function request(path, options = {}) {
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
     if (token && typeof token === 'string') {
-      headers['Authorization'] = `Bearer ${token}`;
+      // Sanitize token to remove any non-ASCII characters
+      const cleanToken = token.replace(/[^\x20-\x7E]/g, '');
+      if (cleanToken.length > 0) {
+        headers['Authorization'] = `Bearer ${cleanToken}`;
+      }
     }
   } catch (e) {
     // Continue without auth
