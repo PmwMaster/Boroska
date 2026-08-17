@@ -2,19 +2,6 @@ import { supabase } from './supabase';
 
 const API_BASE = import.meta.env.PROD ? '' : 'http://localhost:4000';
 
-function cleanToken(token) {
-  if (!token || typeof token !== 'string') return null;
-  // Remove any non-ASCII characters that could cause header issues
-  let cleaned = '';
-  for (let i = 0; i < token.length; i++) {
-    const code = token.charCodeAt(i);
-    if (code >= 32 && code <= 126) {
-      cleaned += token[i];
-    }
-  }
-  return cleaned.length > 10 ? cleaned : null;
-}
-
 async function request(path, options = {}) {
   const url = `${API_BASE}${path}`;
 
@@ -26,9 +13,8 @@ async function request(path, options = {}) {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
-    const safeToken = cleanToken(token);
-    if (safeToken) {
-      headers['Authorization'] = `Bearer ${safeToken}`;
+    if (token && typeof token === 'string') {
+      headers['Authorization'] = `Bearer ${token}`;
     }
   } catch (e) {
     // Continue without auth
