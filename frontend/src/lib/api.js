@@ -12,16 +12,15 @@ async function request(path, options = {}) {
 
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (token && typeof token === 'string') {
-      // Sanitize token to remove any non-ASCII characters
-      const cleanToken = token.replace(/[^\x20-\x7E]/g, '');
-      if (cleanToken.length > 0) {
-        headers['Authorization'] = `Bearer ${cleanToken}`;
+    if (session?.access_token) {
+      // Ensure token is a clean ASCII string
+      const token = String(session.access_token).replace(/[^\x20-\x7E]/g, '');
+      if (token.length > 0) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
     }
   } catch (e) {
-    // Continue without auth
+    // Continue without auth header
   }
 
   const res = await fetch(url, { ...options, headers });
