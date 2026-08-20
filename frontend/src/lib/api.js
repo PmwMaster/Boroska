@@ -1,4 +1,19 @@
+import { supabase } from './supabase';
+
 const API_BASE = import.meta.env.PROD ? '' : 'http://localhost:4000';
+
+// Sanitize token to remove non-ASCII characters
+function sanitizeToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  let cleaned = '';
+  for (let i = 0; i < token.length; i++) {
+    const code = token.charCodeAt(i);
+    if (code >= 32 && code <= 126) {
+      cleaned += token[i];
+    }
+  }
+  return cleaned.length > 10 ? cleaned : null;
+}
 
 async function request(path, options = {}) {
   const url = `${API_BASE}${path}`;
@@ -7,6 +22,17 @@ async function request(path, options = {}) {
     'Content-Type': 'application/json',
     ...options.headers,
   };
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    const cleanToken = sanitizeToken(token);
+    if (cleanToken) {
+      headers['Authorization'] = `Bearer ${cleanToken}`;
+    }
+  } catch (e) {
+    // Continue without auth
+  }
 
   const res = await fetch(url, { ...options, headers });
 
