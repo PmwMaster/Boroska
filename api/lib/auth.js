@@ -8,32 +8,44 @@ export const supabaseAdmin = createClient(
   supabaseServiceKey || ''
 );
 
+function decodeJwtPayload(token) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1];
+    const decoded = Buffer.from(payload, 'base64url').toString('utf-8');
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+}
+
 export async function getUserId(req) {
-  // 1. Try to get user from Authorization header
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.replace('Bearer ', '');
     try {
-      const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-      if (user && !error) {
-        // Upsert user in our database
-        const { data: dbUser } = await supabaseAdmin
+      const payload = decodeJwtPayload(token);
+      if (payload && payload.sub) {
+        const userId = payload.sub;
+        const email = payload.email || '';
+        const name = payload.user_metadata?.name || email.split('@')[0] || 'User';
+        
+        await supabaseAdmin
           .from('User')
           .upsert({
-            id: user.id,
-            email: user.email,
-            name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-          }, { onConflict: 'id' })
-          .select('id')
-          .single();
-        if (dbUser) return dbUser.id;
+            id: userId,
+            email: email,
+            name: name,
+          }, { onConflict: 'id' });
+        
+        return userId;
       }
     } catch (e) {
       console.error('Auth token error:', e.message);
     }
   }
 
-  // 2. Fallback: get first user in database
   try {
     const { data } = await supabaseAdmin.from('User').select('id').limit(1).single();
     return data?.id || null;
