@@ -10,12 +10,23 @@
       "dest": "/assets/$1"
     },
     {
+      "src": "/sw.js",
+      "dest": "/sw.js",
+      "headers": { "Cache-Control": "no-cache" }
+    },
+    {
       "src": "/([^/]+\\.(png|svg|ico|jpg|jpeg|gif|webp|txt|xml|json|webmanifest))",
       "dest": "/$1"
     },
     {
       "src": "/(.*)",
       "dest": "/index.html"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/daily-digest",
+      "schedule": "0 11 * * *"
     }
   ],
   "installCommand": "npm install && cd api && npm install && cd ../frontend && npm install",

@@ -1,0 +1,13 @@
+{
+  "name": "Boroska",
+  "short_name": "Boroska",
+  "description": "Produtividade pessoal: tarefas, rotina, finanças, treino e estudos.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#15161A",
+  "theme_color": "#15161A",
+  "icons": [
+    { "src": "/logo.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/logo.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

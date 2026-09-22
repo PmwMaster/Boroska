@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { SectionHeader } from '../components/ui/SectionHeader.jsx';
 import { PrefsSection } from '../components/ui/PrefsSection.jsx';
 import { fetchUser, updateProfile } from '../lib/api.js';
@@ -6,6 +7,7 @@ import { useToast } from '../lib/toast.jsx';
 import { useAuth } from '../lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { TutorialBox } from '../components/ui/TutorialBox.jsx';
+import { isPushSupported, getPushSubscription, enablePush, disablePush } from '../lib/push.js';
 import styles from './Configuracoes.module.css';
 
 export default function Configuracoes() {
@@ -13,6 +15,32 @@ export default function Configuracoes() {
   const toast = useToast();
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+
+  useEffect(() => {
+    if (!isPushSupported()) return;
+    getPushSubscription().then((sub) => setPushEnabled(!!sub)).catch(() => {});
+  }, []);
+
+  const togglePush = async () => {
+    setPushBusy(true);
+    try {
+      if (pushEnabled) {
+        await disablePush();
+        setPushEnabled(false);
+        toast.success('Notificações desativadas.');
+      } else {
+        await enablePush();
+        setPushEnabled(true);
+        toast.success('Notificações ativadas! Você receberá um resumo todo dia de manhã.');
+      }
+    } catch (e) {
+      toast.error(e.message || 'Erro ao configurar notificações');
+    } finally {
+      setPushBusy(false);
+    }
+  };
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -115,6 +143,31 @@ export default function Configuracoes() {
         <SectionHeader icon="tune" title="Preferências" />
         <PrefsSection />
       </div>
+
+      {isPushSupported() && (
+        <div className="glass-card">
+          <SectionHeader icon="notifications" title="Notificações" />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <span style={{ fontSize: '0.9375rem', fontWeight: 500, color: 'var(--foreground)', display: 'block' }}>Resumo diário</span>
+              <span style={{ fontSize: '0.8125rem', color: 'var(--foreground-muted)' }}>
+                Receba uma notificação toda manhã com suas tarefas e rotina do dia.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={togglePush}
+              disabled={pushBusy}
+              className={pushEnabled ? 'btn btn-secondary' : 'btn btn-gradient'}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '1.125rem' }}>
+                {pushEnabled ? 'notifications_off' : 'notifications_active'}
+              </span>
+              {pushEnabled ? 'Desativar' : 'Ativar notificações'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="glass-card" style={{ marginTop: '1.25rem' }}>
         <SectionHeader icon="lock" title="Sessão da Conta" />

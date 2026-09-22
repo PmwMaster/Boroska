@@ -15,7 +15,7 @@ function sanitizeToken(token) {
   return cleaned.length > 10 ? cleaned : null;
 }
 
-async function request(path, options = {}) {
+export async function request(path, options = {}) {
   const url = `${API_BASE}${path}`;
 
   const headers = {
