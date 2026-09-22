@@ -25,7 +25,36 @@ export default async function handler(req, res) {
       const income = (incomeData || []).reduce((s, t) => s + t.amount, 0);
       const expenses = (expenseData || []).reduce((s, t) => s + t.amount, 0);
       const weekExp = (weekExpenses || []).reduce((s, t) => s + t.amount, 0);
-      return res.json({ balance: income - expenses, weekExpenses: weekExp, weekData: [] });
+
+      const now = new Date();
+      const dayOfWeek = (now.getDay() + 6) % 7;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - dayOfWeek);
+      monday.setHours(0, 0, 0, 0);
+
+      const { data: weekTx } = await supabaseAdmin
+        .from('Transaction')
+        .select('amount, type, date')
+        .eq('userId', userId)
+        .gte('date', monday.toISOString());
+
+      const weekData = Array.from({ length: 7 }, (_, i) => {
+        const dayStart = new Date(monday);
+        dayStart.setDate(monday.getDate() + i);
+        const dayEnd = new Date(dayStart);
+        dayEnd.setDate(dayStart.getDate() + 1);
+
+        const dayTxs = (weekTx || []).filter(t => {
+          const td = new Date(t.date);
+          return td >= dayStart && td < dayEnd;
+        });
+
+        const entradas = dayTxs.filter(t => t.type === 'INCOME').reduce((s, t) => s + t.amount, 0);
+        const saidas = dayTxs.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.amount, 0);
+        return { entradas, saidas };
+      });
+
+      return res.json({ balance: income - expenses, weekExpenses: weekExp, weekData });
     } catch (e) { return res.status(500).json({ error: 'Erro ao carregar stats' }); }
   }
 

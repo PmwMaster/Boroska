@@ -140,8 +140,10 @@ export default function Treino() {
     );
   }
 
-  const { exercises, muscleGroup, status } = workout;
-  const totalSeries = exercises.reduce((sum, ex) => sum + ex.series, 0);
+  const muscleGroup = workout.muscleGroup || 'Treino';
+  const status = workout.status;
+  const exercises = workout.exercises || workout.WorkoutExercise || [];
+  const totalSeries = exercises.reduce((sum, ex) => sum + (ex.series || 0), 0);
   const doneCount = exercises.filter((ex) => ex.isDone).length;
   const progress = exercises.length > 0 ? Math.round((doneCount / exercises.length) * 100) : 0;
   const estimatedMin = totalSeries * 3;

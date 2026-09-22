@@ -48,7 +48,8 @@ export default async function handler(req, res) {
       return res.json({
         user, pendingTasks: pendingTasks || 0, highPriorityTasks: highPriorityTasks || 0,
         todaysRoutine: todaysRoutine || [], studyGoals: studyGoals || [],
-        lastWorkout: lastWorkout || null, studyTodayMinutes, studyStreak,
+        lastWorkout: lastWorkout ? { ...lastWorkout, exercises: lastWorkout.WorkoutExercise || [] } : null,
+        studyTodayMinutes, studyStreak,
         finance: { balance: income - expenses, weekExpenses: weekExp },
       });
     } catch (e) {

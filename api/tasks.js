@@ -56,12 +56,14 @@ export default async function handler(req, res) {
 
   if (action === 'create' && req.method === 'POST') {
     try {
-      const { title, category, priority } = req.body;
+      const { title, category, priority, dueDate } = req.body;
       if (!title?.trim()) return res.status(400).json({ error: 'Campo titulo obrigatorio' });
       if (title.trim().length > 200) return res.status(400).json({ error: 'Titulo muito longo (max 200 caracteres)' });
       const userId = await getUserId(req);
       if (!userId) return res.status(401).json({ error: 'Nao autenticado' });
-      const { data, error } = await supabaseAdmin.from('Task').insert({ title: title.trim(), category: category || 'Geral', priority: priority || 'MEDIUM', userId }).select().single();
+      const taskData = { title: title.trim(), category: category || 'Geral', priority: priority || 'MEDIUM', userId };
+      if (dueDate) taskData.dueDate = dueDate;
+      const { data, error } = await supabaseAdmin.from('Task').insert(taskData).select().single();
       if (error) throw error;
       return res.status(201).json(data);
     } catch (e) {

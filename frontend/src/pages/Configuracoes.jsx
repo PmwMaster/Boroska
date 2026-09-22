@@ -3,12 +3,16 @@ import { PrefsSection } from '../components/ui/PrefsSection.jsx';
 import { fetchUser, updateProfile } from '../lib/api.js';
 import { useFetch } from '../lib/useFetch.js';
 import { useToast } from '../lib/toast.jsx';
+import { useAuth } from '../lib/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { TutorialBox } from '../components/ui/TutorialBox.jsx';
 import styles from './Configuracoes.module.css';
 
 export default function Configuracoes() {
   const { data: user, loading, error, reload } = useFetch(fetchUser);
   const toast = useToast();
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -109,6 +113,33 @@ export default function Configuracoes() {
       <div className="glass-card">
         <SectionHeader icon="tune" title="Preferências" />
         <PrefsSection />
+      </div>
+
+      <div className="glass-card" style={{ marginTop: '1.25rem' }}>
+        <SectionHeader icon="lock" title="Sessão da Conta" />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <span style={{ fontSize: '0.9375rem', fontWeight: 500, color: 'var(--foreground)', display: 'block' }}>Desconectar</span>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--foreground-muted)' }}>Encerrar sua sessão ativa neste navegador</span>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await signOut();
+                toast.success('Você saiu da sua conta.');
+                navigate('/login');
+              } catch {
+                toast.error('Erro ao sair');
+              }
+            }}
+            className="btn btn-secondary"
+            style={{ color: 'var(--danger)', borderColor: 'rgba(192, 74, 61, 0.3)' }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '1.125rem' }}>logout</span>
+            Sair da Conta
+          </button>
+        </div>
       </div>
 
     </div>

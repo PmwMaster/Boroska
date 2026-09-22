@@ -57,6 +57,7 @@ export default function Tarefas() {
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState(() => searchParams.get('filtro') || 'all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
@@ -83,6 +84,11 @@ export default function Tarefas() {
     activeFilter === 'all'
       ? tasks.filter((t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'DONE').length
       : 0;
+
+  const filteredTasks = (tasks || []).filter((t) => {
+    if (selectedCategory !== 'all' && t.category !== selectedCategory) return false;
+    return true;
+  });
 
   return (
     <div className={styles.page}>
@@ -140,8 +146,9 @@ export default function Tarefas() {
             <h3 className={styles.sidebarTitle}>Categorias</h3>
             <div className={styles.categoryList}>
               <button
-                className={`${styles.categoryItem} ${styles.categoryItemActive}`}
+                className={`${styles.categoryItem} ${selectedCategory === 'all' ? styles.categoryItemActive : ''}`}
                 type="button"
+                onClick={() => setSelectedCategory('all')}
               >
                 <span
                   className="material-symbols-outlined"
@@ -150,20 +157,25 @@ export default function Tarefas() {
                   category
                 </span>
                 <span className={styles.categoryName}>Todas</span>
-                <span className={styles.categoryCount}>{tasks.length}</span>
+                <span className={styles.categoryCount}>{(tasks || []).length}</span>
               </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat.name}
-                  className={styles.categoryItem}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '1.125rem', color: cat.color }}>
-                    {cat.icon}
-                  </span>
-                  <span className={styles.categoryName}>{cat.name}</span>
-                </button>
-              ))}
+              {categories.map((cat) => {
+                const count = (tasks || []).filter((t) => t.category === cat.name).length;
+                return (
+                  <button
+                    key={cat.name}
+                    className={`${styles.categoryItem} ${selectedCategory === cat.name ? styles.categoryItemActive : ''}`}
+                    type="button"
+                    onClick={() => setSelectedCategory(selectedCategory === cat.name ? 'all' : cat.name)}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '1.125rem', color: cat.color }}>
+                      {cat.icon}
+                    </span>
+                    <span className={styles.categoryName}>{cat.name}</span>
+                    <span className={styles.categoryCount}>{count}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </aside>
@@ -201,12 +213,12 @@ export default function Tarefas() {
             </div>
 
             <div className={styles.taskList}>
-              {tasks.length === 0 && (
+              {filteredTasks.length === 0 && (
                 <p style={{ textAlign: 'center', color: 'var(--foreground-muted)', padding: '2rem' }}>
                   Nenhuma tarefa encontrada neste filtro.
                 </p>
               )}
-              {tasks.map((task) => {
+              {filteredTasks.map((task) => {
                 const priority = priorityMap[task.priority] || { text: task.priority, variant: 'default' };
                 const isDone = task.status === 'DONE';
                 const isOverdue =

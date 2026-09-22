@@ -32,6 +32,8 @@ export function CreateRoutineForm({ onSuccess }) {
         const formData = new FormData(e.currentTarget);
         const data = Object.fromEntries(formData);
         data.dayOfWeek = parseInt(data.dayOfWeek, 10);
+        if (!data.icon?.trim()) data.icon = 'schedule';
+        if (!data.description?.trim()) delete data.description;
         try {
           await createRoutine(data);
           toast.success('Bloco de rotina criado!');

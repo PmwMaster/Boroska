@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { fetchUser } from '../../lib/api.js';
+import { useAuth } from '../../lib/AuthContext';
 import styles from './Sidebar.module.css';
 
 const navItems = [
@@ -19,6 +20,7 @@ export function Sidebar() {
   const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { signOut } = useAuth();
 
   useEffect(() => {
     fetchUser()
@@ -80,6 +82,32 @@ export function Sidebar() {
               <span className="material-symbols-outlined">person</span>
             </div>
             <span className={styles.userName}>{loading ? 'Carregando...' : (userName || 'Usuário')}</span>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await signOut();
+                } catch {}
+              }}
+              title="Sair"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--foreground-muted)',
+                cursor: 'pointer',
+                padding: '0.25rem',
+                marginLeft: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                lineHeight: 0,
+                opacity: 0.6,
+                transition: 'color 0.2s, opacity 0.2s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--danger)'; e.currentTarget.style.opacity = '1'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--foreground-muted)'; e.currentTarget.style.opacity = '0.6'; }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>logout</span>
+            </button>
           </div>
         </div>
       </aside>

@@ -6,7 +6,7 @@ import { TimelineItem } from '../components/ui/TimelineItem.jsx';
 import { Chip } from '../components/ui/Chip.jsx';
 import { QuickStudyForm } from '../components/ui/QuickStudyForm.jsx';
 import { CreateGoalForm } from '../components/ui/CreateGoalForm.jsx';
-import { fetchStudyStats, fetchStudyGoals, fetchStudySessions, updateStudyGoal, deleteStudyGoal } from '../lib/api.js';
+import { fetchStudyStats, fetchStudyGoals, fetchStudySessions, updateStudyGoal, deleteStudyGoal, deleteStudySession } from '../lib/api.js';
 import { useFetch } from '../lib/useFetch.js';
 import { useToast } from '../lib/toast.jsx';
 import { TutorialBox } from '../components/ui/TutorialBox.jsx';
@@ -283,14 +283,46 @@ export default function Estudos() {
               <div className={styles.timelineLine} />
               <div className={styles.timelineItems}>
                 {sessions.map((s) => (
-                  <TimelineItem
-                    key={s.id}
-                    icon={getSubjectIcon(s.subject)}
-                    label={s.subject}
-                    time={timeAgo(s.date)}
-                    description={s.notes || `${s.duration}min`}
-                    status="completed"
-                  />
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <TimelineItem
+                        icon={getSubjectIcon(s.subject)}
+                        label={s.subject}
+                        time={timeAgo(s.date)}
+                        description={s.topic ? `${s.topic} · ${s.duration}min` : (s.notes || `${s.duration}min`)}
+                        status="completed"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!confirm(`Excluir a sessão de ${s.subject}?`)) return;
+                        try {
+                          await deleteStudySession(s.id);
+                          toast.success('Sessão removida!');
+                          reloadSessions();
+                          reload();
+                        } catch {
+                          toast.error('Erro ao remover sessão');
+                        }
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--foreground-muted)',
+                        cursor: 'pointer',
+                        padding: '0.25rem',
+                        opacity: 0.4,
+                        lineHeight: 0,
+                        transition: 'opacity 0.2s, color 0.2s',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--danger)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.4'; e.currentTarget.style.color = 'var(--foreground-muted)'; }}
+                      title="Excluir sessão"
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '1.125rem' }}>delete</span>
+                    </button>
+                  </div>
                 ))}
                 {sessions.length === 0 && (
                   <p className="stat-label" style={{ textAlign: 'center', padding: '1rem 0' }}>

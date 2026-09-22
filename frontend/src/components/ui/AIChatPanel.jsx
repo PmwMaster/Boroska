@@ -1,6 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-
-const API_BASE = '';
+import {
+  fetchAISessions,
+  fetchAISession,
+  createAISession,
+  addAIMessage,
+  deleteAISession,
+  sendAIChat,
+  executeAIAction,
+} from '../../lib/api.js';
 
 const QUICK_ACTIONS = [
   { label: 'O que tenho pra hoje?', msg: 'Resuma meu dia de hoje com base nos dados.' },
@@ -26,42 +33,31 @@ export function AIChatPanel() {
 
   const saveMessage = async (sid, role, text) => {
     try {
-      await fetch(`${API_BASE}/api/ai?action=add_message&id=${sid}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role, text }),
-      });
+      await addAIMessage(sid, { role, text });
     } catch {}
   };
 
   const createSession = async (firstMsg) => {
     const title = firstMsg.length > 40 ? firstMsg.slice(0, 40) + '...' : firstMsg;
     try {
-      const res = await fetch(`${API_BASE}/api/ai?action=create_session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title }),
-      });
-      const data = await res.json();
-      return data.id;
+      const data = await createAISession({ title });
+      return data?.id || null;
     } catch { return null; }
   };
 
   const loadSessions = async () => {
     setLoadingSessions(true);
     try {
-      const res = await fetch(`${API_BASE}/api/ai?action=sessions`);
-      const data = await res.json();
-      setSessions(data);
+      const data = await fetchAISessions();
+      setSessions(data || []);
     } catch {} finally { setLoadingSessions(false); }
   };
 
   const loadSession = async (id) => {
     try {
-      const res = await fetch(`${API_BASE}/api/ai?action=session&id=${id}`);
-      const data = await res.json();
+      const data = await fetchAISession(id);
       setSessionId(data.id);
-      setMessages(data.messages.map(m => ({ role: m.role, text: m.text })));
+      setMessages((data.messages || []).map(m => ({ role: m.role, text: m.text })));
       setShowHistory(false);
       setActions([]);
     } catch {}
@@ -78,7 +74,7 @@ export function AIChatPanel() {
   const deleteSession = async (id, e) => {
     e.stopPropagation();
     try {
-      await fetch(`${API_BASE}/api/ai?action=delete_session&id=${id}`, { method: 'DELETE' });
+      await deleteAISession(id);
       setSessions(prev => prev.filter(s => s.id !== id));
       if (sessionId === id) newConversation();
     } catch {}
@@ -105,14 +101,7 @@ export function AIChatPanel() {
     await saveMessage(sid, 'user', text);
 
     try {
-      const res = await fetch(`${API_BASE}/api/ai?action=chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Erro');
-
+      const data = await sendAIChat(text);
       const assistantMsg = { role: 'assistant', text: data.reply };
       setMessages(prev => [...prev, assistantMsg]);
       await saveMessage(sid, 'assistant', data.reply);
@@ -126,12 +115,7 @@ export function AIChatPanel() {
 
   const executeAction = async (action) => {
     try {
-      const res = await fetch(`${API_BASE}/api/ai?action=execute`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(action),
-      });
-      const data = await res.json();
+      const data = await executeAIAction(action);
       if (data.success) {
         const sysMsg = { role: 'system', text: `✅ Ação executada: ${action.type.replace('criar_', '')} criado(a)!` };
         setMessages(prev => [...prev, sysMsg]);

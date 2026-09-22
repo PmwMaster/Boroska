@@ -106,3 +106,13 @@ export function deleteStudySession(id) { return request(`/api/studies?action=del
 // ─── Usuário ───
 export function fetchUser() { return get('/api/core?action=users'); }
 export function updateProfile(data) { return patch('/api/core?action=users', data); }
+
+// ─── Assistente IA ───
+export function fetchAISessions() { return get('/api/ai?action=sessions'); }
+export function fetchAISession(id) { return get(`/api/ai?action=session&id=${id}`); }
+export function createAISession(data) { return post('/api/ai?action=create_session', data); }
+export function addAIMessage(id, data) { return post(`/api/ai?action=add_message&id=${id}`, data); }
+export function deleteAISession(id) { return request(`/api/ai?action=delete_session&id=${id}`, { method: 'DELETE' }); }
+export function sendAIChat(message) { return post('/api/ai?action=chat', { message }); }
+export function executeAIAction(action) { return post('/api/ai?action=execute', action); }
+

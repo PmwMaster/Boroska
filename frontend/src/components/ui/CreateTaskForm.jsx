@@ -28,6 +28,11 @@ export function CreateTaskForm({ variant = 'inline', onSuccess }) {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const data = Object.fromEntries(formData);
+        if (data.dueDate) {
+          data.dueDate = new Date(data.dueDate + 'T23:59:59').toISOString();
+        } else {
+          delete data.dueDate;
+        }
         try {
           await createTask(data);
           toast.success('Tarefa criada!');

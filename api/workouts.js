@@ -1,6 +1,14 @@
 import { supabaseAdmin, getUserId } from './lib/auth.js';
 import { computeStreak } from './lib/dates.js';
 
+function formatWorkout(w) {
+  if (!w) return null;
+  return {
+    ...w,
+    exercises: w.WorkoutExercise || w.exercises || [],
+  };
+}
+
 export default async function handler(req, res) {
   const { action, id } = req.query;
 
@@ -10,7 +18,7 @@ export default async function handler(req, res) {
       if (!userId) return res.json(null);
       const today = new Date(); today.setHours(0, 0, 0, 0);
       const { data } = await supabaseAdmin.from('Workout').select('*, WorkoutExercise(*)').eq('userId', userId).gte('date', today.toISOString()).order('date', { ascending: false }).limit(1).single();
-      return res.json(data || null);
+      return res.json(formatWorkout(data) || null);
     } catch (e) { return res.json(null); }
   }
 
@@ -40,7 +48,7 @@ export default async function handler(req, res) {
         await supabaseAdmin.from('WorkoutExercise').insert(exData);
       }
       const { data: full } = await supabaseAdmin.from('Workout').select('*, WorkoutExercise(*)').eq('id', workout.id).single();
-      return res.status(201).json(full);
+      return res.status(201).json(formatWorkout(full));
     } catch (e) { return res.status(500).json({ error: 'Erro ao criar treino' }); }
   }
 
@@ -62,7 +70,7 @@ export default async function handler(req, res) {
         if (exData.length) await supabaseAdmin.from('WorkoutExercise').insert(exData);
       }
       const { data } = await supabaseAdmin.from('Workout').select('*, WorkoutExercise(*)').eq('id', id).single();
-      return res.json(data);
+      return res.json(formatWorkout(data));
     } catch (e) { return res.status(500).json({ error: 'Erro ao atualizar treino' }); }
   }
 

@@ -27,11 +27,25 @@ export default function Dashboard() {
     </div>
   );
 
-  const { user, pendingTasks, highPriorityTasks, todaysRoutine, studyGoals, lastWorkout, finance, studyTodayMinutes, studyStreak = 0 } = data;
+  const {
+    user,
+    pendingTasks = 0,
+    highPriorityTasks = 0,
+    todaysRoutine = [],
+    studyGoals = [],
+    lastWorkout = null,
+    finance = { balance: 0, weekExpenses: 0 },
+    studyTodayMinutes = 0,
+    studyStreak = 0,
+  } = data || {};
+  const safeRoutine = todaysRoutine || [];
+  const safeGoals = studyGoals || [];
+  const safeFinance = finance || { balance: 0, weekExpenses: 0 };
   const now = new Date();
   const hour = now.getHours();
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
-  const firstPending = todaysRoutine.find((b) => !b.isCompleted);
+  const firstName = user?.name?.trim() ? user.name.trim().split(' ')[0] : 'Usuário';
+  const firstPending = safeRoutine.find((b) => !b.isCompleted);
 
   return (
     <div className={styles.dashboard}>
@@ -50,7 +64,7 @@ export default function Dashboard() {
       {/* ── HEADER (sem card, aberto) ── */}
       <div className={styles.hero}>
         <div className={styles.heroLeft}>
-          <h1 className={styles.heroGreeting}>{greeting}, {user.name.split(' ')[0]} &#x1F44B;</h1>
+          <h1 className={styles.heroGreeting}>{greeting}, {firstName} &#x1F44B;</h1>
         </div>
         <div className={styles.heroRight}>
           <div className={styles.miniDate}>
@@ -88,8 +102,8 @@ export default function Dashboard() {
           icon="payments"
           iconBg="var(--warning-bg)"
           label="Saldo"
-          value={`R$ ${Math.floor(finance.balance)}`}
-          chip={{ text: `Semana R$${Math.floor(finance.weekExpenses)}`, variant: 'tertiary' }}
+          value={`R$ ${Math.floor(safeFinance.balance || 0)}`}
+          chip={{ text: `Semana R$${Math.floor(safeFinance.weekExpenses || 0)}`, variant: 'tertiary' }}
         />
       </div>
 
@@ -101,7 +115,7 @@ export default function Dashboard() {
           {/* Tarefas — sem card, com separadores finos */}
           <div style={{ marginBottom: '1.5rem' }}>
             <SectionHeader icon="task_alt" title="Tarefas de Hoje" />
-            {todaysRoutine.filter((b) => !b.isCompleted).slice(0, 5).map((block, i) => (
+            {safeRoutine.filter((b) => !b.isCompleted).slice(0, 5).map((block, i) => (
               <div key={block.id} className={styles.taskRow}>
                 <form
                   onSubmit={async (e) => {
@@ -122,7 +136,7 @@ export default function Dashboard() {
                 </span>
               </div>
             ))}
-            {todaysRoutine.filter((b) => !b.isCompleted).length === 0 && (
+            {safeRoutine.filter((b) => !b.isCompleted).length === 0 && (
               <p style={{ padding: '1.5rem 0', textAlign: 'center', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>
                 Nenhuma tarefa pendente — ótimo trabalho!
               </p>
@@ -150,7 +164,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <div className={styles.woExercises}>
-                {(lastWorkout.exercises ?? []).slice(0, 4).map((ex) => (
+                {((lastWorkout.exercises || lastWorkout.WorkoutExercise) ?? []).slice(0, 4).map((ex) => (
                   <div key={ex.id} className={styles.woExRow}>
                     <span>{ex.name}</span>
                     <span className={styles.woExMeta}>{ex.series}x{ex.repsMin}-{ex.repsMax}{ex.weight ? ` · ${ex.weight}kg` : ''}</span>
@@ -179,7 +193,7 @@ export default function Dashboard() {
           <div className={styles.miniCard}>
             <SectionHeader icon="sync" title="Rotina" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {todaysRoutine.slice(0, 5).map((block) => {
+              {safeRoutine.slice(0, 5).map((block) => {
                 const isActive = firstPending?.id === block.id;
                 return (
                   <div key={block.id} className={styles.routineRow} style={{ opacity: block.isCompleted ? 0.4 : 1 }}>
@@ -201,7 +215,7 @@ export default function Dashboard() {
                   </div>
                 );
               })}
-              {todaysRoutine.length === 0 && (
+              {safeRoutine.length === 0 && (
                 <p style={{ textAlign: 'center', color: 'var(--foreground-muted)', fontSize: '0.8125rem', padding: '1rem 0' }}>
                   Nenhum bloco de rotina hoje.
                 </p>
@@ -212,13 +226,13 @@ export default function Dashboard() {
           {/* Metas de estudo */}
           <div className={styles.miniCard}>
             <SectionHeader icon="school" title="Metas" />
-            {studyGoals.length === 0 ? (
+            {safeGoals.length === 0 ? (
               <p style={{ textAlign: 'center', color: 'var(--foreground-muted)', fontSize: '0.8125rem' }}>
                 Nenhuma meta cadastrada.
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {studyGoals.slice(0, 3).map((g) => (
+                {safeGoals.slice(0, 3).map((g) => (
                   <div key={g.id}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                       <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--foreground)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
@@ -245,23 +259,23 @@ export default function Dashboard() {
       </div>
 
       {/* ── META BANNER ── */}
-      {(studyGoals[0]) && (
+      {(safeGoals[0]) && (
         <div className={styles.goalBar}>
           <div className={styles.goalBarLeft}>
             <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.5rem' }}>track_changes</span>
             <div>
               <span style={{ fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--primary)' }}>Meta Principal</span>
-              <span style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--foreground)', display: 'block' }}>{studyGoals[0].name}</span>
+              <span style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--foreground)', display: 'block' }}>{safeGoals[0].name}</span>
             </div>
           </div>
           <div style={{ flex: '0 0 280px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                 <span style={{ fontSize: '0.6875rem', color: 'var(--foreground-muted)' }}>Progresso</span>
-                <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--primary)' }}>{studyGoals[0].progress}%</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--primary)' }}>{safeGoals[0].progress}%</span>
               </div>
               <div className="progress-track" style={{ height: '6px', background: 'var(--surface-bright)' }}>
-                <div className="progress-fill gradient-bg" style={{ width: `${studyGoals[0].progress}%` }} />
+                <div className="progress-fill gradient-bg" style={{ width: `${safeGoals[0].progress}%` }} />
               </div>
             </div>
             <Link to="/estudos" style={{ color: 'var(--foreground-muted)', lineHeight: 0 }}>

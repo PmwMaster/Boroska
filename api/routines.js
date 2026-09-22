@@ -29,11 +29,14 @@ export default async function handler(req, res) {
     try {
       const userId = await getUserId(req);
       if (!userId) return res.status(401).json({ error: 'Nao autenticado' });
-      const { title, dayOfWeek, startTime, endTime } = req.body;
+      const { title, dayOfWeek, startTime, endTime, description, icon } = req.body;
       if (!title?.trim()) return res.status(400).json({ error: 'Campo titulo obrigatorio' });
       if (dayOfWeek === undefined || dayOfWeek < 0 || dayOfWeek > 6) return res.status(400).json({ error: 'Campo dia da semana obrigatorio' });
       if (!startTime || !endTime) return res.status(400).json({ error: 'Campo horario obrigatorio' });
-      const { data, error } = await supabaseAdmin.from('RoutineBlock').insert({ title: title.trim(), dayOfWeek, startTime, endTime, userId }).select().single();
+      const blockData = { title: title.trim(), dayOfWeek, startTime, endTime, userId };
+      if (description) blockData.description = description.trim();
+      if (icon) blockData.icon = icon.trim();
+      const { data, error } = await supabaseAdmin.from('RoutineBlock').insert(blockData).select().single();
       if (error) throw error;
       return res.status(201).json(data);
     } catch (e) { return res.status(500).json({ error: 'Erro ao criar bloco' }); }

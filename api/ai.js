@@ -1,5 +1,74 @@
 import { supabaseAdmin, getUserId } from './lib/auth.js';
 
+const GEMINI_MODEL = 'gemini-2.5-flash';
+
+async function callGemini(systemInstruction, userMessage) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('GEMINI_API_KEY nao configurada');
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 500 },
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Gemini API error ${res.status}: ${body}`);
+  }
+
+  const data = await res.json();
+  const parts = data?.candidates?.[0]?.content?.parts || [];
+  return parts.map(p => p.text || '').join('').trim();
+}
+
+async function buildContext(userId) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+
+  const [
+    { data: tasks },
+    { data: routines },
+    { data: incomeData },
+    { data: expenseData },
+    { data: weekExpenseData },
+    { data: lastWorkout },
+    { data: studyGoals },
+    { data: studyToday },
+  ] = await Promise.all([
+    supabaseAdmin.from('Task').select('title, category, priority, status').eq('userId', userId).neq('status', 'DONE').limit(10),
+    supabaseAdmin.from('RoutineBlock').select('title, isCompleted').eq('userId', userId).eq('dayOfWeek', new Date().getDay()),
+    supabaseAdmin.from('Transaction').select('amount').eq('userId', userId).eq('type', 'INCOME'),
+    supabaseAdmin.from('Transaction').select('amount').eq('userId', userId).eq('type', 'EXPENSE'),
+    supabaseAdmin.from('Transaction').select('amount').eq('userId', userId).eq('type', 'EXPENSE').gte('date', weekAgo),
+    supabaseAdmin.from('Workout').select('*, WorkoutExercise(*)').eq('userId', userId).order('date', { ascending: false }).limit(1).maybeSingle(),
+    supabaseAdmin.from('StudyGoal').select('name, progress').eq('userId', userId),
+    supabaseAdmin.from('StudySession').select('duration').eq('userId', userId).gte('date', today.toISOString()),
+  ]);
+
+  const pendingTasks = tasks || [];
+  const highPriority = pendingTasks.filter(t => t.priority === 'HIGH');
+  const completedBlocks = (routines || []).filter(b => b.isCompleted);
+  const income = (incomeData || []).reduce((s, t) => s + t.amount, 0);
+  const expenses = (expenseData || []).reduce((s, t) => s + t.amount, 0);
+  const weekExpenses = (weekExpenseData || []).reduce((s, t) => s + t.amount, 0);
+  const studyTodayMinutes = (studyToday || []).reduce((s, t) => s + (t.duration || 0), 0);
+
+  return `Dados atuais do usuario (hoje):
+- ${pendingTasks.length} tarefas pendentes (${highPriority.length} alta prioridade): ${pendingTasks.map(t => t.title).join(', ') || 'nenhuma'}
+- Rotina: ${(routines || []).length} blocos, ${completedBlocks.length} concluidos
+- Financas: saldo R$${(income - expenses).toFixed(2)}, gastos da semana R$${weekExpenses.toFixed(2)}
+- Treino: ${lastWorkout ? `${lastWorkout.muscleGroup} (${(lastWorkout.WorkoutExercise || []).length} exercicios, status: ${lastWorkout.status})` : 'nenhum treino recente'}
+- Estudos: ${studyTodayMinutes}min hoje, ${(studyGoals || []).length} metas: ${(studyGoals || []).map(g => `${g.name} ${g.progress}%`).join(', ') || 'nenhuma'}`;
+}
+
 export default async function handler(req, res) {
   const { action, id } = req.query;
 
@@ -72,8 +141,32 @@ export default async function handler(req, res) {
       const { message } = req.body;
       if (!message) return res.status(400).json({ error: 'Mensagem obrigatoria' });
       if (message.length > 5000) return res.status(400).json({ error: 'Mensagem muito longa (max 5000 caracteres)' });
-      return res.json({ reply: 'IA indisponivel no ambiente de producao.', actions: [] });
-    } catch (e) { return res.status(503).json({ error: 'IA indisponivel' }); }
+
+      const context = await buildContext(userId);
+      const systemInstruction = `Voce e o assistente do Boroska, um app de produtividade pessoal. Responda em portugues, de forma direta e util. Use os dados atuais abaixo para dar conselhos personalizados.
+
+${context}
+
+Quando sugerir uma acao concreta (criar tarefa, bloco de rotina, meta de estudo), use este formato exato no final da resposta, em uma linha propria:
+[ACTION:criar_tarefa]Titulo da tarefa|Categoria|Prioridade(HIGH/MEDIUM/LOW)
+[ACTION:criar_bloco]Titulo|dia_semana(0-6)|HH:MM-HH:MM
+[ACTION:criar_meta]Nome da meta|cor_hex|horas_semana`;
+
+      const reply = await callGemini(systemInstruction, message);
+
+      const actions = [];
+      const actionRegex = /\[ACTION:(\w+)\](.+)/g;
+      let match;
+      while ((match = actionRegex.exec(reply)) !== null) {
+        actions.push({ type: match[1], data: match[2].trim() });
+      }
+      const cleanReply = reply.replace(/\[ACTION:\w+\].+/g, '').trim();
+
+      return res.json({ reply: cleanReply || 'Sem resposta da IA.', actions });
+    } catch (e) {
+      console.error('Erro IA:', e.message);
+      return res.status(503).json({ error: 'IA indisponivel' });
+    }
   }
 
   if (action === 'execute' && req.method === 'POST') {
