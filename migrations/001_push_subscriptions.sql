@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS "PushSubscription" (
     endpoint TEXT UNIQUE NOT NULL,
     p256dh TEXT NOT NULL,
     auth TEXT NOT NULL,
-    "userId" TEXT NOT NULL REFERENCES "User"(id),
+    "userId" UUID NOT NULL REFERENCES "User"(id),
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_push_sub_user ON "PushSubscription"("userId");

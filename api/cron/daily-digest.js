@@ -49,7 +49,11 @@ export default async function handler(req, res) {
         );
         sent++;
       } catch (e) {
-        if (e.statusCode === 404 || e.statusCode === 410) expired.push(sub.endpoint);
+        if (e.statusCode === 404 || e.statusCode === 410) {
+          expired.push(sub.endpoint);
+        } else {
+          console.error('Push send error:', sub.endpoint, e.statusCode || e.message);
+        }
       }
     }
   }
