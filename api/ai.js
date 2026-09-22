@@ -2,7 +2,7 @@ import { supabaseAdmin, getUserId } from './lib/auth.js';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
-async function callGemini(systemInstruction, userMessage) {
+async function callGemini(systemInstruction, contents) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY nao configurada');
 
@@ -13,7 +13,7 @@ async function callGemini(systemInstruction, userMessage) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemInstruction }] },
-        contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+        contents,
         generationConfig: { temperature: 0.7, maxOutputTokens: 500 },
       }),
     }
@@ -138,21 +138,44 @@ export default async function handler(req, res) {
     try {
       const userId = await getUserId(req);
       if (!userId) return res.status(401).json({ error: 'Nao autenticado' });
-      const { message } = req.body;
+      const { message, sessionId } = req.body;
       if (!message) return res.status(400).json({ error: 'Mensagem obrigatoria' });
       if (message.length > 5000) return res.status(400).json({ error: 'Mensagem muito longa (max 5000 caracteres)' });
 
       const context = await buildContext(userId);
-      const systemInstruction = `Voce e o assistente do Boroska, um app de produtividade pessoal. Responda em portugues, de forma direta e util. Use os dados atuais abaixo para dar conselhos personalizados.
+      const systemInstruction = `Voce e o assistente do Boroska, um app de produtividade pessoal. Responda em portugues, de forma direta e util. Use os dados atuais abaixo para dar conselhos personalizados. Use o historico da conversa para manter contexto entre mensagens.
 
 ${context}
 
-Quando sugerir uma acao concreta (criar tarefa, bloco de rotina, meta de estudo), use este formato exato no final da resposta, em uma linha propria:
+Quando sugerir uma acao concreta, use este formato exato no final da resposta, em uma linha propria:
 [ACTION:criar_tarefa]Titulo da tarefa|Categoria|Prioridade(HIGH/MEDIUM/LOW)
 [ACTION:criar_bloco]Titulo|dia_semana(0-6)|HH:MM-HH:MM
-[ACTION:criar_meta]Nome da meta|cor_hex|horas_semana`;
+[ACTION:criar_meta]Nome da meta|cor_hex|horas_semana
+[ACTION:concluir_tarefa]Titulo exato da tarefa existente
+[ACTION:registrar_transacao]Descricao|Valor|Tipo(INCOME/EXPENSE)|Categoria`;
 
-      const reply = await callGemini(systemInstruction, message);
+      let history = [];
+      if (sessionId) {
+        const { data: session } = await supabaseAdmin.from('ChatSession').select('userId').eq('id', sessionId).single();
+        if (session && session.userId === userId) {
+          // O front-end ja salva a mensagem atual do usuario antes de chamar essa rota,
+          // entao a linha mais recente e um duplicado da mensagem atual - descarta ela.
+          const { data: pastMessages } = await supabaseAdmin
+            .from('ChatMessage')
+            .select('role, text')
+            .eq('sessionId', sessionId)
+            .neq('role', 'system')
+            .order('createdAt', { ascending: false })
+            .limit(11);
+          history = (pastMessages || [])
+            .slice(1)
+            .reverse()
+            .map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.text }] }));
+        }
+      }
+
+      const contents = [...history, { role: 'user', parts: [{ text: message }] }];
+      const reply = await callGemini(systemInstruction, contents);
 
       const actions = [];
       const actionRegex = /\[ACTION:(\w+)\](.+)/g;
@@ -192,6 +215,23 @@ Quando sugerir uma acao concreta (criar tarefa, bloco de rotina, meta de estudo)
         const [name, color = '#7C6FF0', weekTarget = '4'] = data.split('|').map(s => s.trim());
         if (!name) return res.status(400).json({ error: 'Nome obrigatorio' });
         const { data: d } = await supabaseAdmin.from('StudyGoal').insert({ name, color, weekTarget: parseInt(weekTarget) || 4, userId }).select().single();
+        result = d;
+      } else if (type === 'concluir_tarefa') {
+        const title = data.trim();
+        if (!title) return res.status(400).json({ error: 'Titulo obrigatorio' });
+        const { data: task } = await supabaseAdmin.from('Task').select('id, status').eq('userId', userId).ilike('title', title).neq('status', 'DONE').limit(1).maybeSingle();
+        if (!task) return res.status(404).json({ error: 'Tarefa nao encontrada' });
+        const { data: d } = await supabaseAdmin.from('Task').update({ status: 'DONE', completedAt: new Date().toISOString() }).eq('id', task.id).select().single();
+        result = d;
+      } else if (type === 'registrar_transacao') {
+        const [description, amountStr, txType = 'EXPENSE', category = 'outros'] = data.split('|').map(s => s.trim());
+        const amount = parseFloat((amountStr || '').replace(',', '.'));
+        if (!description || !amount) return res.status(400).json({ error: 'Descricao e valor obrigatorios' });
+        const { data: d } = await supabaseAdmin.from('Transaction').insert({
+          description, amount: Math.abs(amount),
+          type: txType === 'INCOME' ? 'INCOME' : 'EXPENSE',
+          category, userId,
+        }).select().single();
         result = d;
       } else {
         return res.status(400).json({ error: 'Tipo de acao desconhecido' });

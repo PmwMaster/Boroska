@@ -113,6 +113,6 @@ export function fetchAISession(id) { return get(`/api/ai?action=session&id=${id}
 export function createAISession(data) { return post('/api/ai?action=create_session', data); }
 export function addAIMessage(id, data) { return post(`/api/ai?action=add_message&id=${id}`, data); }
 export function deleteAISession(id) { return request(`/api/ai?action=delete_session&id=${id}`, { method: 'DELETE' }); }
-export function sendAIChat(message) { return post('/api/ai?action=chat', { message }); }
+export function sendAIChat(message, sessionId) { return post('/api/ai?action=chat', { message, sessionId }); }
 export function executeAIAction(action) { return post('/api/ai?action=execute', action); }
 

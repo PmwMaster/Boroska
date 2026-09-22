@@ -9,6 +9,22 @@ import {
   executeAIAction,
 } from '../../lib/api.js';
 
+const ACTION_LABELS = {
+  criar_tarefa: 'Tarefa criada!',
+  criar_bloco: 'Bloco de rotina criado!',
+  criar_meta: 'Meta de estudo criada!',
+  concluir_tarefa: 'Tarefa concluída!',
+  registrar_transacao: 'Transação registrada!',
+};
+
+const ACTION_BUTTON_LABELS = {
+  criar_tarefa: 'Criar tarefa',
+  criar_bloco: 'Criar bloco',
+  criar_meta: 'Criar meta',
+  concluir_tarefa: 'Concluir tarefa',
+  registrar_transacao: 'Registrar transação',
+};
+
 const QUICK_ACTIONS = [
   { label: 'O que tenho pra hoje?', msg: 'Resuma meu dia de hoje com base nos dados.' },
   { label: 'Criar rotina de estudos', msg: 'Sugira uma rotina de estudos baseada nas minhas metas atuais.' },
@@ -101,7 +117,7 @@ export function AIChatPanel() {
     await saveMessage(sid, 'user', text);
 
     try {
-      const data = await sendAIChat(text);
+      const data = await sendAIChat(text, sid);
       const assistantMsg = { role: 'assistant', text: data.reply };
       setMessages(prev => [...prev, assistantMsg]);
       await saveMessage(sid, 'assistant', data.reply);
@@ -117,7 +133,8 @@ export function AIChatPanel() {
     try {
       const data = await executeAIAction(action);
       if (data.success) {
-        const sysMsg = { role: 'system', text: `✅ Ação executada: ${action.type.replace('criar_', '')} criado(a)!` };
+        const label = ACTION_LABELS[action.type] || 'Ação executada!';
+        const sysMsg = { role: 'system', text: `✅ ${label}` };
         setMessages(prev => [...prev, sysMsg]);
         if (sessionId) saveMessage(sessionId, 'system', sysMsg.text);
         setActions(prev => prev.filter(a => a !== action));
@@ -281,7 +298,7 @@ export function AIChatPanel() {
                     color: 'var(--success)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
                   }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>add_circle</span>
-                    Executar: {a.type.replace('criar_', '').replace('_', ' ')}
+                    {ACTION_BUTTON_LABELS[a.type] || 'Executar ação'}
                   </button>
                 ))}
 
