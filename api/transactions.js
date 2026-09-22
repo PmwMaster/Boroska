@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   if (action === 'stats' && req.method === 'GET') {
     try {
       const userId = await getUserId(req);
-      if (!userId) return res.json({ balance: 0, weekExpenses: 0, weekData: [] });
+      if (!userId) return res.json({ balance: 0, weekExpenses: 0, weekData: [], savings: null });
       const { data: incomeData } = await supabaseAdmin.from('Transaction').select('amount').eq('userId', userId).eq('type', 'INCOME');
       const { data: expenseData } = await supabaseAdmin.from('Transaction').select('amount').eq('userId', userId).eq('type', 'EXPENSE');
       const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
@@ -25,6 +25,15 @@ export default async function handler(req, res) {
       const income = (incomeData || []).reduce((s, t) => s + t.amount, 0);
       const expenses = (expenseData || []).reduce((s, t) => s + t.amount, 0);
       const weekExp = (weekExpenses || []).reduce((s, t) => s + t.amount, 0);
+
+      const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+      const [{ data: goal }, { data: monthIncome }, { data: monthExpense }] = await Promise.all([
+        supabaseAdmin.from('FinanceGoal').select('*').eq('userId', userId).order('createdAt').limit(1).maybeSingle(),
+        supabaseAdmin.from('Transaction').select('amount').eq('userId', userId).eq('type', 'INCOME').gte('date', monthStart.toISOString()),
+        supabaseAdmin.from('Transaction').select('amount').eq('userId', userId).eq('type', 'EXPENSE').gte('date', monthStart.toISOString()),
+      ]);
+      const savedThisMonth = Math.max(0, (monthIncome || []).reduce((s, t) => s + t.amount, 0) - (monthExpense || []).reduce((s, t) => s + t.amount, 0));
+      const savings = goal ? { id: goal.id, name: goal.name, current: savedThisMonth, target: goal.targetAmount } : null;
 
       const now = new Date();
       const dayOfWeek = (now.getDay() + 6) % 7;
@@ -54,7 +63,7 @@ export default async function handler(req, res) {
         return { entradas, saidas };
       });
 
-      return res.json({ balance: income - expenses, weekExpenses: weekExp, weekData });
+      return res.json({ balance: income - expenses, weekExpenses: weekExp, weekData, savings });
     } catch (e) { return res.status(500).json({ error: 'Erro ao carregar stats' }); }
   }
 
@@ -111,6 +120,70 @@ export default async function handler(req, res) {
       if (error) throw error;
       return res.json({ deleted: true });
     } catch (e) { return res.status(500).json({ error: 'Erro ao deletar transacao' }); }
+  }
+
+  if (action === 'goals' && req.method === 'GET') {
+    try {
+      const userId = await getUserId(req);
+      if (!userId) return res.json([]);
+      const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+      const [{ data: goals }, { data: incomeData }, { data: expenseData }] = await Promise.all([
+        supabaseAdmin.from('FinanceGoal').select('*').eq('userId', userId).order('createdAt'),
+        supabaseAdmin.from('Transaction').select('amount').eq('userId', userId).eq('type', 'INCOME').gte('date', monthStart.toISOString()),
+        supabaseAdmin.from('Transaction').select('amount').eq('userId', userId).eq('type', 'EXPENSE').gte('date', monthStart.toISOString()),
+      ]);
+      const savedThisMonth = (incomeData || []).reduce((s, t) => s + t.amount, 0) - (expenseData || []).reduce((s, t) => s + t.amount, 0);
+      const withProgress = (goals || []).map((g) => ({
+        ...g,
+        saved: Math.max(0, savedThisMonth),
+        progress: g.targetAmount > 0 ? Math.min(100, Math.round((Math.max(0, savedThisMonth) / g.targetAmount) * 100)) : 0,
+      }));
+      return res.json(withProgress);
+    } catch (e) { return res.status(500).json({ error: 'Erro ao carregar metas' }); }
+  }
+
+  if (action === 'create_goal' && req.method === 'POST') {
+    try {
+      const userId = await getUserId(req);
+      if (!userId) return res.status(401).json({ error: 'Nao autenticado' });
+      const { name, targetAmount, color } = req.body;
+      if (!name?.trim()) return res.status(400).json({ error: 'Nome obrigatorio' });
+      const target = parseFloat(targetAmount);
+      if (!target || target <= 0) return res.status(400).json({ error: 'Valor alvo obrigatorio' });
+      const { data, error } = await supabaseAdmin.from('FinanceGoal').insert({ name: name.trim(), targetAmount: target, color: color || '#7EB356', userId }).select().single();
+      if (error) throw error;
+      return res.status(201).json(data);
+    } catch (e) { return res.status(500).json({ error: 'Erro ao criar meta' }); }
+  }
+
+  if (action === 'update_goal' && req.method === 'PATCH') {
+    try {
+      const userId = await getUserId(req);
+      if (!userId) return res.status(401).json({ error: 'Nao autenticado' });
+      const { data: goal } = await supabaseAdmin.from('FinanceGoal').select('userId').eq('id', id).single();
+      if (!goal) return res.status(404).json({ error: 'Nao encontrada' });
+      if (goal.userId !== userId) return res.status(403).json({ error: 'Acesso negado' });
+      const updates = {};
+      if (req.body.name !== undefined) updates.name = req.body.name;
+      if (req.body.targetAmount !== undefined) updates.targetAmount = parseFloat(req.body.targetAmount);
+      if (req.body.color !== undefined) updates.color = req.body.color;
+      const { data, error } = await supabaseAdmin.from('FinanceGoal').update(updates).eq('id', id).select().single();
+      if (error) throw error;
+      return res.json(data);
+    } catch (e) { return res.status(500).json({ error: 'Erro ao atualizar meta' }); }
+  }
+
+  if (action === 'delete_goal' && req.method === 'DELETE') {
+    try {
+      const userId = await getUserId(req);
+      if (!userId) return res.status(401).json({ error: 'Nao autenticado' });
+      const { data: goal } = await supabaseAdmin.from('FinanceGoal').select('userId').eq('id', id).single();
+      if (!goal) return res.status(404).json({ error: 'Nao encontrada' });
+      if (goal.userId !== userId) return res.status(403).json({ error: 'Acesso negado' });
+      const { error } = await supabaseAdmin.from('FinanceGoal').delete().eq('id', id);
+      if (error) throw error;
+      return res.json({ deleted: true });
+    } catch (e) { return res.status(500).json({ error: 'Erro ao deletar meta' }); }
   }
 
   res.status(404).json({ error: 'Rota nao encontrada' });

@@ -10,6 +10,7 @@ import Rotina from './pages/Rotina.jsx';
 import Financas from './pages/Financas.jsx';
 import Treino from './pages/Treino.jsx';
 import Estudos from './pages/Estudos.jsx';
+import Relatorio from './pages/Relatorio.jsx';
 import Configuracoes from './pages/Configuracoes.jsx';
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="/financas" element={<Financas />} />
             <Route path="/treino" element={<Treino />} />
             <Route path="/estudos" element={<Estudos />} />
+            <Route path="/relatorio" element={<Relatorio />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
           </Route>
         </Routes>

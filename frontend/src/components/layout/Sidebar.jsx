@@ -11,6 +11,7 @@ const navItems = [
   { href: '/financas', icon: 'payments', label: 'Finanças' },
   { href: '/treino', icon: 'fitness_center', label: 'Treino' },
   { href: '/estudos', icon: 'school', label: 'Estudos' },
+  { href: '/relatorio', icon: 'monitoring', label: 'Relatório' },
 ];
 
 export function Sidebar() {

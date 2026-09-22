@@ -39,6 +39,8 @@ export default function Dashboard() {
     finance = { balance: 0, weekExpenses: 0 },
     studyTodayMinutes = 0,
     studyStreak = 0,
+    taskStreak = 0,
+    workoutStreak = 0,
   } = data || {};
   const safeRoutine = todaysRoutine || [];
   const safeGoals = studyGoals || [];
@@ -84,14 +86,19 @@ export default function Dashboard() {
           iconBg="rgba(226, 138, 75, 0.12)"
           label="Pendentes"
           value={String(pendingTasks)}
-          chip={{ text: `${highPriorityTasks} urg.`, variant: 'error' }}
+          chip={{ text: taskStreak > 0 ? `🔥${taskStreak}d · ${highPriorityTasks} urg.` : `${highPriorityTasks} urg.`, variant: 'error' }}
         />
         <StatsCard
           icon="fitness_center"
           iconBg="var(--success-bg)"
           label="Treino"
           value={lastWorkout?.muscleGroup || '—'}
-          chip={{ text: lastWorkout?.status === 'COMPLETED' ? 'Feito' : 'Pendente', variant: lastWorkout?.status === 'COMPLETED' ? 'success' : 'warning' }}
+          chip={{
+            text: workoutStreak > 0
+              ? `🔥${workoutStreak}d`
+              : lastWorkout?.status === 'COMPLETED' ? 'Feito' : 'Pendente',
+            variant: lastWorkout?.status === 'COMPLETED' ? 'success' : 'warning',
+          }}
         />
         <StatsCard
           icon="timer"

@@ -58,6 +58,7 @@ export function patch(path, body) {
 
 // ─── Dashboard ───
 export function fetchDashboard() { return get('/api/core?action=dashboard'); }
+export function fetchReport(period = 'week') { return get(`/api/core?action=report&period=${period}`); }
 
 // ─── Tarefas ───
 export function fetchTasks(filter = 'all') { return get(`/api/tasks?action=list&filter=${filter}`); }
@@ -82,6 +83,10 @@ export function fetchCategories() { return get('/api/transactions?action=categor
 export function createTransaction(data) { return post('/api/transactions?action=create', data); }
 export function updateTransaction(id, data) { return patch(`/api/transactions?action=update&id=${id}`, data); }
 export function deleteTransaction(id) { return request(`/api/transactions?action=delete&id=${id}`, { method: 'DELETE' }); }
+export function fetchFinanceGoals() { return get('/api/transactions?action=goals'); }
+export function createFinanceGoal(data) { return post('/api/transactions?action=create_goal', data); }
+export function updateFinanceGoal(id, data) { return patch(`/api/transactions?action=update_goal&id=${id}`, data); }
+export function deleteFinanceGoal(id) { return request(`/api/transactions?action=delete_goal&id=${id}`, { method: 'DELETE' }); }
 
 // ─── Treino ───
 export function fetchWorkoutStats() { return get('/api/workouts?action=stats'); }

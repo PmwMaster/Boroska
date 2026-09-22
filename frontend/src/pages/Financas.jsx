@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StatsCard } from '../components/ui/StatsCard.jsx';
 import { SectionHeader } from '../components/ui/SectionHeader.jsx';
 import { CreateTransactionForm } from '../components/ui/CreateTransactionForm.jsx';
-import { fetchFinanceStats, fetchTransactions, fetchCategories, updateTransaction, deleteTransaction } from '../lib/api.js';
+import { fetchFinanceStats, fetchTransactions, fetchCategories, updateTransaction, deleteTransaction, createFinanceGoal, updateFinanceGoal } from '../lib/api.js';
 import { useFetch } from '../lib/useFetch.js';
 import { useToast } from '../lib/toast.jsx';
 import { TutorialBox } from '../components/ui/TutorialBox.jsx';
@@ -66,6 +66,7 @@ function formatTxDate(date) {
 export default function Financas() {
   const toast = useToast();
   const [editingId, setEditingId] = useState(null);
+  const [editingGoal, setEditingGoal] = useState(false);
 
   const { data: stats, loading: statsLoading, error: statsError, reload } = useFetch(fetchFinanceStats);
   const { data: transactions, loading: txLoading, error: txError, reload: reloadTx } = useFetch(() => fetchTransactions(5));
@@ -110,9 +111,9 @@ export default function Financas() {
   const totalSaidas = chartData.reduce((acc, d) => acc + d.exit, 0);
   const periodBalance = totalEntradas - totalSaidas;
   const expensePct = totalEntradas > 0 ? Math.round((totalSaidas / totalEntradas) * 100) : 0;
-  const savings = stats.savings || { current: 0, target: 1 };
-  const savingsPct = savings.target > 0
-    ? Math.round((savings.current / savings.target) * 100)
+  const savings = stats.savings;
+  const savingsPct = savings?.target > 0
+    ? Math.min(100, Math.round((savings.current / savings.target) * 100))
     : 0;
 
   return (
@@ -171,24 +172,63 @@ export default function Financas() {
             <div className="stat-icon" style={{ backgroundColor: 'var(--warning-bg)', color: 'var(--warning)' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>savings</span>
             </div>
+            {savings && (
+              <button
+                type="button"
+                onClick={() => setEditingGoal(true)}
+                style={{ background: 'none', border: 'none', color: 'var(--foreground-muted)', cursor: 'pointer', padding: '0.25rem', lineHeight: 0 }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '1.125rem' }}>edit</span>
+              </button>
+            )}
           </div>
-          <div>
-            <p className="stat-label">Meta de Economia</p>
-            <div className={styles.spendRow}>
-              <span className={styles.spendValue}>{formatCurrency(savings.current)}</span>
-              <span className={styles.savingsPct}>/ {formatCurrency(savings.target)}</span>
+
+          {editingGoal || !savings ? (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const fd = new FormData(e.currentTarget);
+                const payload = { name: fd.get('name') || 'Meta mensal', targetAmount: fd.get('targetAmount') };
+                try {
+                  if (savings?.id) await updateFinanceGoal(savings.id, payload);
+                  else await createFinanceGoal(payload);
+                  toast.success('Meta de economia salva!');
+                  setEditingGoal(false);
+                  reload();
+                } catch {
+                  toast.error('Erro ao salvar meta');
+                }
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
+            >
+              <input name="name" defaultValue={savings?.name || 'Economizar no mês'} placeholder="Nome da meta" style={inputStyle} />
+              <input name="targetAmount" type="number" step="0.01" min="1" defaultValue={savings?.target || ''} placeholder="Valor alvo (R$)" required style={inputStyle} />
+              <div style={{ display: 'flex', gap: '0.375rem', justifyContent: 'flex-end' }}>
+                {savings && (
+                  <button type="button" className="btn btn-ghost" style={{ fontSize: '0.8125rem' }} onClick={() => setEditingGoal(false)}>Cancelar</button>
+                )}
+                <button type="submit" className="btn btn-ghost" style={{ fontSize: '0.8125rem', color: 'var(--primary)' }}>Salvar</button>
+              </div>
+            </form>
+          ) : (
+            <div>
+              <p className="stat-label">{savings.name || 'Meta de Economia'}</p>
+              <div className={styles.spendRow}>
+                <span className={styles.spendValue}>{formatCurrency(savings.current)}</span>
+                <span className={styles.savingsPct}>/ {formatCurrency(savings.target)}</span>
+              </div>
+              <div className={styles.progressLabel}>
+                <span className={styles.progressText} style={{ color: 'var(--success)' }}>meta mensal</span>
+                <span className={styles.progressPct}>{savingsPct}%</span>
+              </div>
+              <div className="progress-track">
+                <div
+                  className="progress-fill"
+                  style={{ width: `${savingsPct}%`, backgroundColor: 'var(--success)' }}
+                />
+              </div>
             </div>
-            <div className={styles.progressLabel}>
-              <span className={styles.progressText} style={{ color: 'var(--success)' }}>meta mensal</span>
-              <span className={styles.progressPct}>{savingsPct}%</span>
-            </div>
-            <div className="progress-track">
-              <div
-                className="progress-fill"
-                style={{ width: `${savingsPct}%`, backgroundColor: 'var(--success)' }}
-              />
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
