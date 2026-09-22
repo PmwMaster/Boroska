@@ -5,6 +5,8 @@ import { StatsCard } from '../components/ui/StatsCard.jsx';
 import { Chip } from '../components/ui/Chip.jsx';
 import { SectionHeader } from '../components/ui/SectionHeader.jsx';
 import { CreateTaskForm } from '../components/ui/CreateTaskForm.jsx';
+import { PageSkeleton } from '../components/ui/Skeleton.jsx';
+import { EmptyState } from '../components/ui/EmptyState.jsx';
 import { fetchTasks, fetchTaskStats, toggleTask, updateTask, deleteTask } from '../lib/api.js';
 import { useFetch } from '../lib/useFetch.js';
 import { useToast } from '../lib/toast.jsx';
@@ -68,7 +70,7 @@ export default function Tarefas() {
   const { data: tasks, loading, error, reload } = useFetch(() => fetchTasks(activeFilter), [activeFilter]);
   const { data: stats } = useFetch(fetchTaskStats, []);
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--foreground-muted)' }}>Carregando...</div>;
+  if (loading) return <div className={styles.page}><PageSkeleton /></div>;
   if (error) return (
     <div style={{ textAlign: 'center', padding: '2rem' }}>
       <p style={{ color: 'var(--danger)', marginBottom: '1rem' }}>Erro ao carregar: {error}</p>
@@ -214,9 +216,7 @@ export default function Tarefas() {
 
             <div className={styles.taskList}>
               {filteredTasks.length === 0 && (
-                <p style={{ textAlign: 'center', color: 'var(--foreground-muted)', padding: '2rem' }}>
-                  Nenhuma tarefa encontrada neste filtro.
-                </p>
+                <EmptyState icon="task_alt" title="Nenhuma tarefa encontrada neste filtro." />
               )}
               {filteredTasks.map((task) => {
                 const priority = priorityMap[task.priority] || { text: task.priority, variant: 'default' };

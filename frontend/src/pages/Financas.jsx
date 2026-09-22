@@ -6,6 +6,7 @@ import { fetchFinanceStats, fetchTransactions, fetchCategories, updateTransactio
 import { useFetch } from '../lib/useFetch.js';
 import { useToast } from '../lib/toast.jsx';
 import { TutorialBox } from '../components/ui/TutorialBox.jsx';
+import { PageSkeleton } from '../components/ui/Skeleton.jsx';
 import styles from './Financas.module.css';
 
 const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
@@ -77,8 +78,8 @@ export default function Financas() {
 
   if (loading) {
     return (
-      <div className={styles.financas} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <p style={{ color: 'var(--foreground-muted)', fontSize: '1rem' }}>Carregando...</p>
+      <div className={styles.financas}>
+        <PageSkeleton />
       </div>
     );
   }

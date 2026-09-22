@@ -10,6 +10,7 @@ import { fetchStudyStats, fetchStudyGoals, fetchStudySessions, updateStudyGoal, 
 import { useFetch } from '../lib/useFetch.js';
 import { useToast } from '../lib/toast.jsx';
 import { TutorialBox } from '../components/ui/TutorialBox.jsx';
+import { PageSkeleton } from '../components/ui/Skeleton.jsx';
 import styles from './Estudos.module.css';
 
 const CIRCLE_R = 54;
@@ -64,8 +65,8 @@ export default function Estudos() {
 
   if (loading) {
     return (
-      <div className={styles.estudos} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <p style={{ color: 'var(--foreground-muted)', fontSize: '1rem' }}>Carregando...</p>
+      <div className={styles.estudos}>
+        <PageSkeleton />
       </div>
     );
   }

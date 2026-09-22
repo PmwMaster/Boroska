@@ -7,6 +7,7 @@ import { Chip } from '../components/ui/Chip.jsx';
 import { BodyMap } from '../components/ui/BodyMap.jsx';
 import { MUSCLE_EXERCISES } from '../components/ui/ExerciseSuggestions.js';
 import { TutorialBox } from '../components/ui/TutorialBox.jsx';
+import { PageSkeleton } from '../components/ui/Skeleton.jsx';
 import styles from './Treino.module.css';
 
 const STATUS_MAP = {
@@ -70,7 +71,7 @@ export default function Treino() {
     try { await updateWorkoutStatus(workout.id, newStatus); toast.success(newStatus === 'COMPLETED' ? 'Treino finalizado!' : 'Treino reaberto!'); reload(); } catch { toast.error('Erro'); }
   };
 
-  if (loading) return <div className={styles.treino}><p style={{ textAlign: 'center', color: 'var(--foreground-muted)', padding: '4rem 0' }}>Carregando...</p></div>;
+  if (loading) return <div className={styles.treino}><PageSkeleton cards={2} /></div>;
   if (error) return (
     <div className={styles.treino}>
       <div style={{ textAlign: 'center', padding: '2rem' }}>

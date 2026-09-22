@@ -5,6 +5,8 @@ import { TimelineItem } from '../components/ui/TimelineItem.jsx';
 import { SectionHeader } from '../components/ui/SectionHeader.jsx';
 import { CreateTaskForm } from '../components/ui/CreateTaskForm.jsx';
 import { TutorialBox } from '../components/ui/TutorialBox.jsx';
+import { PageSkeleton } from '../components/ui/Skeleton.jsx';
+import { EmptyState } from '../components/ui/EmptyState.jsx';
 import { fetchDashboard, toggleRoutineBlock, updateWorkoutStatus } from '../lib/api.js';
 import { useFetch } from '../lib/useFetch.js';
 import { useToast } from '../lib/toast.jsx';
@@ -16,7 +18,7 @@ export default function Dashboard() {
   const toast = useToast();
   const { data, loading, error, reload } = useFetch(fetchDashboard);
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--foreground-muted)' }}>Carregando...</div>;
+  if (loading) return <div className={styles.dashboard}><PageSkeleton cards={4} /></div>;
   if (error) return (
     <div style={{ textAlign: 'center', padding: '2rem' }}>
       <p style={{ color: 'var(--danger)', marginBottom: '1rem' }}>Erro ao carregar: {error}</p>
@@ -137,9 +139,7 @@ export default function Dashboard() {
               </div>
             ))}
             {safeRoutine.filter((b) => !b.isCompleted).length === 0 && (
-              <p style={{ padding: '1.5rem 0', textAlign: 'center', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>
-                Nenhuma tarefa pendente — ótimo trabalho!
-              </p>
+              <EmptyState icon="task_alt" title="Nenhuma tarefa pendente — ótimo trabalho!" />
             )}
           </div>
 
@@ -216,9 +216,7 @@ export default function Dashboard() {
                 );
               })}
               {safeRoutine.length === 0 && (
-                <p style={{ textAlign: 'center', color: 'var(--foreground-muted)', fontSize: '0.8125rem', padding: '1rem 0' }}>
-                  Nenhum bloco de rotina hoje.
-                </p>
+                <EmptyState icon="sync" title="Nenhum bloco de rotina hoje." />
               )}
             </div>
           </div>
@@ -227,9 +225,7 @@ export default function Dashboard() {
           <div className={styles.miniCard}>
             <SectionHeader icon="school" title="Metas" />
             {safeGoals.length === 0 ? (
-              <p style={{ textAlign: 'center', color: 'var(--foreground-muted)', fontSize: '0.8125rem' }}>
-                Nenhuma meta cadastrada.
-              </p>
+              <EmptyState icon="school" title="Nenhuma meta cadastrada." />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {safeGoals.slice(0, 3).map((g) => (

@@ -7,6 +7,8 @@ import { ProgressBar } from '../components/ui/ProgressBar.jsx';
 import { SectionHeader } from '../components/ui/SectionHeader.jsx';
 import { CreateRoutineForm } from '../components/ui/CreateRoutineForm.jsx';
 import { TutorialBox } from '../components/ui/TutorialBox.jsx';
+import { PageSkeleton } from '../components/ui/Skeleton.jsx';
+import { EmptyState } from '../components/ui/EmptyState.jsx';
 import styles from './Rotina.module.css';
 
 const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -34,9 +36,7 @@ export default function Rotina() {
   if (blocksLoading || statsLoading) {
     return (
       <div className={styles.page}>
-        <p style={{ textAlign: 'center', color: 'var(--foreground-muted)', padding: '4rem 0' }}>
-          Carregando...
-        </p>
+        <PageSkeleton />
       </div>
     );
   }
@@ -211,9 +211,7 @@ export default function Rotina() {
             </div>
 
             {timelineItems.length === 0 ? (
-              <p style={{ textAlign: 'center', color: 'var(--foreground-muted)', padding: '2rem' }}>
-                Nenhum bloco cadastrado para hoje.
-              </p>
+              <EmptyState icon="sync" title="Nenhum bloco cadastrado para hoje." />
             ) : (
               <div className={styles.timelineItems}>
                 {timelineItems.map((item, i) => (

@@ -30,8 +30,9 @@ export default function Configuracoes() {
 
   if (loading) {
     return (
-      <div className={styles.config} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <p style={{ color: 'var(--foreground-muted)', fontSize: '1rem' }}>Carregando...</p>
+      <div className={styles.config} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '32rem' }}>
+        <div className="skeleton" style={{ width: '180px', height: '1.5rem' }} />
+        <div className="skeleton" style={{ height: '280px', borderRadius: 'var(--radius-2xl)' }} />
       </div>
     );
   }
