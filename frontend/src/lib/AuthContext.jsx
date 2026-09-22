@@ -78,8 +78,23 @@ export function AuthProvider({ children }) {
     return session?.access_token;
   };
 
+  const resetPasswordForEmail = async (email) => {
+    if (!authAvailable) {
+      throw new Error('Autenticação não disponível. Configure o Supabase Auth.');
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) throw error;
+  };
+
+  const updatePassword = async (newPassword) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, getToken, authAvailable }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, getToken, authAvailable, resetPasswordForEmail, updatePassword }}>
       {children}
     </AuthContext.Provider>
   );
