@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import frontSvg from '/body-front.svg?raw';
-import backSvg from '/body-back.svg?raw';
+import frontSvg from '../../assets/body-front.svg?raw';
+import backSvg from '../../assets/body-back.svg?raw';
 
 const FRONT_MUSCLES = {
   'peito': ['chest-left', 'chest-right'],

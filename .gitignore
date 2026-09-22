@@ -36,10 +36,11 @@ backend/
 scripts/
 skills/
 
-# Imagens e assets não essenciais
-*.png
-*.svg
-*.ico
+
+# Imagens na raiz (scratch)
+/*.png
+/*.svg
+/*.ico
 
 # Docker
 docker-compose.yml
