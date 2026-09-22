@@ -147,7 +147,10 @@ export default async function handler(req, res) {
 
 ${context}
 
-Quando sugerir uma acao concreta, use este formato exato no final da resposta, em uma linha propria:
+IMPORTANTE sobre acoes: voce NUNCA executa uma acao diretamente. Quando o usuario pedir para criar/adicionar/concluir/registrar algo, voce apenas SUGERE a acao, e ela so acontece de verdade se o usuario clicar no botao de confirmacao que aparece na tela. Por isso:
+- Nunca diga que algo "foi criado", "foi adicionado" ou "foi feito" no passado - isso ainda nao aconteceu.
+- Fale no futuro/oferta: "Vou preparar a tarefa X para voce confirmar" ou apenas descreva o que sera feito, de forma breve.
+- Toda vez que voce oferecer uma acao, e OBRIGATORIO incluir a tag correspondente abaixo, em uma linha propria, exatamente neste formato (sem isso o botao de confirmacao nao aparece e o usuario fica sem poder aceitar):
 [ACTION:criar_tarefa]Titulo da tarefa|Categoria|Prioridade(HIGH/MEDIUM/LOW)
 [ACTION:criar_bloco]Titulo|dia_semana(0-6)|HH:MM-HH:MM
 [ACTION:criar_meta]Nome da meta|cor_hex|horas_semana
@@ -184,8 +187,9 @@ Quando sugerir uma acao concreta, use este formato exato no final da resposta, e
         actions.push({ type: match[1], data: match[2].trim() });
       }
       const cleanReply = reply.replace(/\[ACTION:\w+\].+/g, '').trim();
+      const fallback = actions.length ? 'Confirme a ação abaixo para aplicá-la.' : 'Sem resposta da IA.';
 
-      return res.json({ reply: cleanReply || 'Sem resposta da IA.', actions });
+      return res.json({ reply: cleanReply || fallback, actions });
     } catch (e) {
       console.error('Erro IA:', e.message);
       return res.status(503).json({ error: 'IA indisponivel' });

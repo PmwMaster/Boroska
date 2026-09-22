@@ -51,9 +51,7 @@ export default function ResetPassword() {
     <div className={styles.container}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <span className="material-symbols-outlined" style={{ fontSize: '2.5rem', color: 'var(--primary)' }}>
-            lock_reset
-          </span>
+          <img src="/boroska.png" alt="Boroska" style={{ width: '4.5rem', height: '4.5rem', objectFit: 'contain', margin: '0 auto 0.5rem', display: 'block' }} />
           <h1 className={styles.title}>Boroska</h1>
           <p className={styles.subtitle}>Defina sua nova senha</p>
         </div>

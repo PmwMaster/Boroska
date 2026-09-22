@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { fetchUser } from '../../lib/api.js';
 import { useAuth } from '../../lib/AuthContext';
 import styles from './Sidebar.module.css';
+import boroskaLogo from '../../assets/boroska.png';
 
 const navItems = [
   { href: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
@@ -39,7 +40,7 @@ export function Sidebar() {
           <span className="material-symbols-outlined">menu</span>
         </button>
         <span className={styles.mobileLogo}>
-          <img src="/logo.png" alt="Boroska" className={styles.mobileLogoImg} />
+          <img src={boroskaLogo} alt="Boroska" className={styles.mobileLogoImg} />
         </span>
         <span style={{ width: '2rem', flexShrink: 0 }} />
       </div>
@@ -49,7 +50,7 @@ export function Sidebar() {
       <aside className={`${styles.sidebar} ${menuOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.logoContainer}>
           <div className={styles.logoRow}>
-            <img src="/logo.png" alt="Boroska" className={styles.logoImg} />
+            <img src={boroskaLogo} alt="Boroska" className={styles.logoImg} />
           </div>
         </div>
 
