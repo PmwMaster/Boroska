@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 
-const API_BASE = import.meta.env.PROD ? '' : 'http://localhost:4000';
+const API_BASE = '';
 
 const QUICK_ACTIONS = [
   { label: 'O que tenho pra hoje?', msg: 'Resuma meu dia de hoje com base nos dados.' },

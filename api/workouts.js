@@ -1,4 +1,5 @@
 import { supabaseAdmin, getUserId } from './lib/auth.js';
+import { computeStreak } from './lib/dates.js';
 
 export default async function handler(req, res) {
   const { action, id } = req.query;
@@ -20,7 +21,9 @@ export default async function handler(req, res) {
       const { count: totalWorkouts } = await supabaseAdmin.from('Workout').select('*', { count: 'exact', head: true }).eq('userId', userId);
       const weekStart = new Date(); weekStart.setHours(0, 0, 0, 0); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
       const { count: thisWeek } = await supabaseAdmin.from('Workout').select('*', { count: 'exact', head: true }).eq('userId', userId).gte('date', weekStart.toISOString());
-      return res.json({ streak: 0, totalWorkouts: totalWorkouts || 0, thisWeek: thisWeek || 0 });
+      const { data: workoutDates } = await supabaseAdmin.from('Workout').select('date').eq('userId', userId);
+      const streak = computeStreak((workoutDates || []).map(w => w.date));
+      return res.json({ streak, totalWorkouts: totalWorkouts || 0, thisWeek: thisWeek || 0 });
     } catch (e) { return res.status(500).json({ error: 'Erro ao carregar stats' }); }
   }
 

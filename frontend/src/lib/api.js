@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-const API_BASE = import.meta.env.PROD ? '' : 'http://localhost:4000';
+const API_BASE = '';
 
 // Sanitize token to remove non-ASCII characters
 function sanitizeToken(token) {

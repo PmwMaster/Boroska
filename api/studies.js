@@ -1,4 +1,5 @@
 import { supabaseAdmin, getUserId } from './lib/auth.js';
+import { computeStreak } from './lib/dates.js';
 
 export default async function handler(req, res) {
   const { action, id } = req.query;
@@ -11,7 +12,9 @@ export default async function handler(req, res) {
       const { data: todaySessions } = await supabaseAdmin.from('StudySession').select('duration').eq('userId', userId).gte('date', today.toISOString());
       const todayMinutes = (todaySessions || []).reduce((s, r) => s + (r.duration || 0), 0);
       const { data: goals } = await supabaseAdmin.from('StudyGoal').select('progress').eq('userId', userId).order('progress', { ascending: false }).limit(1);
-      return res.json({ todayMinutes, streak: 0, projectProgress: goals?.[0]?.progress || 0 });
+      const { data: sessionDates } = await supabaseAdmin.from('StudySession').select('date').eq('userId', userId);
+      const streak = computeStreak((sessionDates || []).map(s => s.date));
+      return res.json({ todayMinutes, streak, projectProgress: goals?.[0]?.progress || 0 });
     } catch (e) { return res.status(500).json({ error: 'Erro ao carregar stats' }); }
   }
 
