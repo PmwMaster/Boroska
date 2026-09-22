@@ -8,51 +8,21 @@ export const supabaseAdmin = createClient(
   supabaseServiceKey || ''
 );
 
-function decodeJwtPayload(token) {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = parts[1];
-    let padded = payload;
-    const padding = 4 - (padded.length % 4);
-    if (padding !== 4) padded += '='.repeat(padding);
-    const decoded = Buffer.from(padded, 'base64').toString('utf-8');
-    return JSON.parse(decoded);
-  } catch {
-    return null;
-  }
-}
-
 export async function getUserId(req) {
   const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.replace('Bearer ', '');
-    try {
-      const payload = decodeJwtPayload(token);
-      if (payload && payload.sub) {
-        const userId = payload.sub;
-        const email = payload.email || '';
-        const name = payload.user_metadata?.name || email.split('@')[0] || 'User';
-        
-        await supabaseAdmin
-          .from('User')
-          .upsert({
-            id: userId,
-            email: email,
-            name: name,
-          }, { onConflict: 'id' });
-        
-        return userId;
-      }
-    } catch (e) {
-      console.error('Auth token error:', e.message);
-    }
-  }
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
 
-  try {
-    const { data } = await supabaseAdmin.from('User').select('id').limit(1).single();
-    return data?.id || null;
-  } catch {
-    return null;
-  }
+  const token = authHeader.replace('Bearer ', '');
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
+  if (error || !data?.user) return null;
+
+  const userId = data.user.id;
+  const email = data.user.email || '';
+  const name = data.user.user_metadata?.name || email.split('@')[0] || 'User';
+
+  await supabaseAdmin
+    .from('User')
+    .upsert({ id: userId, email, name }, { onConflict: 'id' });
+
+  return userId;
 }
