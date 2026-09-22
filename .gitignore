@@ -12,7 +12,7 @@ node_modules/
 .vercel
 
 # Production builds
-/dist
+**/dist
 /build
 
 # Debug logs
